@@ -52,6 +52,14 @@ def spherical_to_cartesian(rho, theta, phi):
     z = rho * np.cos(phi)
     return np.stack([x, y, z], axis=-1)
 
+def real_sph_harm(m, l, theta, phi):
+    if m > 0:
+        return np.sqrt(2) * sph_harm(m, l, theta, phi).real
+    elif m < 0:
+        return np.sqrt(2) * sph_harm(-m, l, theta, phi).imag
+    else:
+        return sph_harm(0, l, theta, phi).real
+
 def compute_sh_coefficients_grid(rho_grid, theta_grid, phi_grid, l_max):
     """
     Compute spherical harmonics coefficients on a regular grid.
@@ -69,10 +77,10 @@ def reconstruct_shape_from_sh(coeffs, theta_grid, phi_grid):
     """
     Reconstruct rho values from spherical harmonics coefficients.
     """
-    result = np.zeros(theta_grid.shape, dtype=complex)
+    result = np.zeros(theta_grid.shape, dtype=float)
     for (l, m, c) in coeffs:
         Y_lm = sph_harm(m, l, theta_grid, phi_grid)
-        result += c * Y_lm
+        result += (c * Y_lm).real
     return result
 
 def visualize_sh_coefficients(coeffs, l_max):
@@ -86,7 +94,8 @@ def visualize_sh_coefficients(coeffs, l_max):
     plt.xlabel('Coefficient Index')
     plt.ylabel('Magnitude')
     plt.title(f'Spherical Harmonics Coefficients Magnitudes (l_max={l_max})')
-    plt.show()
+    plt.savefig('sh_coeff.png')
+    plt.close()
 
 def visualize_reconstructed_shape(coords, title="3D Shape"):
     """
@@ -99,7 +108,8 @@ def visualize_reconstructed_shape(coords, title="3D Shape"):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title(title)
-    plt.show()
+    plt.savefig('reconstructed.png')
+    plt.close()
 
 def main():
     # Define the mask filenames
@@ -149,7 +159,8 @@ def main():
     ax.view_init(elev=20, azim=45)
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig('original.png')
+    plt.close()
     
     # Apply affine transformation to surface vertices to get world coordinates
     surface_world_coords = nib.affines.apply_affine(affine, surface_verts)
@@ -204,8 +215,8 @@ def main():
     print(f"Computed {len(coeffs)} spherical harmonics coefficients.")
     
     # Visualize the coefficients
-    print("Visualizing spherical harmonics coefficients...")
-    visualize_sh_coefficients(coeffs, l_max)
+    #print("Visualizing spherical harmonics coefficients...")
+    #visualize_sh_coefficients(coeffs, l_max)
     
     # Reconstruct the shape from coefficients
     print("Reconstructing shape from spherical harmonics coefficients...")
